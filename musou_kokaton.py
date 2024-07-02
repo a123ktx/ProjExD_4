@@ -88,6 +88,11 @@ class Bird(pg.sprite.Sprite):
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
+        if key_lst[pg.K_LSHIFT]:    #追加機能１　高速化
+            self.speed = 20
+        else:
+            self.speed = 10
+
         sum_mv = [0, 0]
         for k, mv in __class__.delta.items():
             if key_lst[k]:
@@ -241,6 +246,57 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
+    
+
+
+class Gravity(pg.sprite.Sprite):
+    def __init__(self, life):
+        super().__init__()
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        self.d = pg.draw.rect(self.image, (255, 255, 255), (0, 0, 0, 0))
+        self.image.set_alpha(192)
+        self.life = life
+        self.rect = self.image.get_rect()
+    def update(self):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+       
+
+def check_gravity(score, gr_group):
+    keys = pg.key.get_pressed()
+    if keys[pg.K_RETURN] and score.value >= 200:
+        gr = Gravity(life = 400)
+        gr_group.add(gr)
+        score.value -= 200
+    return score
+
+class EMP(pg.sprite.Sprite):
+    """
+    追加機能3
+    発動時に存在する敵機と爆弾を無効化するクラス
+    """
+    def __init__(self, enemys: Enemy, bombs: Bomb):
+        # 画面全体に黄色を表示
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        color = (255, 255, 0)
+        pg.draw.rect(self.image, color, (0, 0, WIDTH, HEIGHT))
+        self.image.set_alpha(50)
+        self.rect = self.image.get_rect()
+        self.life = 0.05
+        # エネミーを無効化する
+        emys = pg.sprite.spritecollide(self, enemys, False)
+        if emys:
+            for enemy in emys:
+                enemy.interval = float('inf')
+                enemy.image = pg.transform.laplacian(enemy.image)
+                enemy.image.set_colorkey((0, 0, 0))
+        # ボムを無効化する
+        bbs = pg.sprite.spritecollide(self, bombs, False)
+        if bbs:
+            for bomb in bbs:
+                bomb.speed /= 2
+                bomb.state = "inactive"
 
 
 class Gravity(pg.sprite.Sprite):
@@ -314,6 +370,8 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            
+
             # 追加機能3 EMP
             if key_lst[pg.K_e] and score.value >= 20:
                 emp = EMP(emys, bombs)
@@ -373,6 +431,7 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+
         pg.display.update()
         tmr += 1
         clock.tick(50)
