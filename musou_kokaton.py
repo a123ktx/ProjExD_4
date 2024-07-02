@@ -243,6 +243,28 @@ class Score:
         screen.blit(self.image, self.rect)
 
 
+class Gravity(pg.sprite.Sprite):
+    def __init__(self, life):
+        super().__init__()
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        self.d = pg.draw.rect(self.image, (255, 255, 255), (0, 0, 0, 0))
+        self.image.set_alpha(192)
+        self.life = life
+        self.rect = self.image.get_rect()
+    def update(self):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+       
+
+def check_gravity(score, gr_group):
+    keys = pg.key.get_pressed()
+    if keys[pg.K_RETURN] and score.value >= 200:
+        gr = Gravity(life = 400)
+        gr_group.add(gr)
+        score.value -= 200
+    return score
+
 class EMP(pg.sprite.Sprite):
     """
     追加機能3
@@ -282,6 +304,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    gr_group = pg.sprite.Group()
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -299,6 +322,8 @@ def main():
                 pg.display.update()
                 time.sleep(emp.life)
         screen.blit(bg_img, [0, 0])
+
+        score = check_gravity(score, gr_group)
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
@@ -326,7 +351,18 @@ def main():
                     pg.display.update()
                     time.sleep(2)
                     return
+        
+        if gr_group:
+            for gr in gr_group:
+                for bomb in pg.sprite.spritecollide(gr, bombs, True):
+                    exps.add(Explosion(bomb, 50))
+                for emy in pg.sprite.spritecollide(gr, emys, True):
+                    exps.add(Explosion(emy, 100))  
+                    bird.change_img(6, screen)  
+                    score.value += 10            
 
+        gr_group.update()
+        gr_group.draw(screen)
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
