@@ -295,7 +295,7 @@ def main():
             if key_lst[pg.K_e] and score.value >= 20:
                 emp = EMP(emys, bombs)
                 score.value -= 20
-                screen.blit(emp.image, (0, 0))
+                screen.blit(emp.image, emp.rect)
                 pg.display.update()
                 time.sleep(emp.life)
         screen.blit(bg_img, [0, 0])
