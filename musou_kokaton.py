@@ -221,7 +221,7 @@ class Enemy(pg.sprite.Sprite):
         if self.rect.centery > self.bound:
             self.vy = 0
             self.state = "stop"
-        self.rect.move_ip(self.self.vx, self.self.vy)
+        self.rect.move_ip(self.vx, self.vy)
 
 
 class Score:
@@ -242,6 +242,28 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
+
+class Gravity(pg.sprite.Sprite):
+    def __init__(self, life):
+        super().__init__()
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        self.d = pg.draw.rect(self.image, (255, 255, 255), (0, 0, 0, 0))
+        self.image.set_alpha(192)
+        self.life = life
+        self.rect = self.image.get_rect()
+    def update(self):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+       
+
+def check_gravity(score, gr_group):
+    keys = pg.key.get_pressed()
+    if keys[pg.K_RETURN] and score.value >= 200:
+        gr = Gravity(life = 400)
+        gr_group.add(gr)
+        score.value -= 200
+    return score
 
 class EMP(pg.sprite.Sprite):
     """
@@ -301,7 +323,7 @@ def main():
                 time.sleep(emp.life)
         screen.blit(bg_img, [0, 0])
 
-
+        score = check_gravity(score, gr_group)
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
